@@ -79,6 +79,4 @@ def main(
                 for row in in_reader:
                     out_writer.writerow([instance_path] + row)
 
-if __name__ == "__main__":
-    borg.script(main)
-
+script_main = borg.script_main(main, __name__)

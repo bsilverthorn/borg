@@ -88,6 +88,15 @@ def script(main):
 
     plac.call(main)
 
+def script_main(main, name):
+    def run_script_main():
+        borg.script(main)
+
+    if name == "__main__":
+        run_script_main()
+
+    return run_script_main
+
 annotations = plac.annotations
 
 from . import defaults

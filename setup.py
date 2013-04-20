@@ -32,6 +32,9 @@ setup(
     cmdclass = cmdclass,
     ext_modules = ext_modules,
     install_requires = requires,
+    entry_points = {
+        "console_scripts": [
+            "borg-bundle = borg.tools.bundle_run_data:script_main"]},
     author = "Bryan Silverthorn",
     author_email = "bsilverthorn@gmail.com",
     description = "the borg algorithm portfolio toolkit",
