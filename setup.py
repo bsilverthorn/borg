@@ -28,13 +28,16 @@ with open("requirements.txt") as file_:
 
 setup(
     name = "borg",
-    version = "2012.4.01",
+    version = "0.7.0",
     cmdclass = cmdclass,
     ext_modules = ext_modules,
     install_requires = requires,
     entry_points = {
         "console_scripts": [
-            "borg-bundle = borg.tools.bundle_run_data:script_main"]},
+            "borg-gather = borg.tools.run_solvers:script_main",
+            "borg-bundle = borg.tools.bundle_run_data:script_main",
+            "borg-estimate = borg.tools.estimate:script_main",
+            "borg-train = borg.tools.train:script_main"]},
     author = "Bryan Silverthorn",
     author_email = "bsilverthorn@gmail.com",
     description = "the borg algorithm portfolio toolkit",

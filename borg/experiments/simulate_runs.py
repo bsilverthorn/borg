@@ -76,7 +76,6 @@ def simulate_run(run, maker, train_data, test_data):
 
     split_id = uuid.uuid4()
     budget = test_data.common_budget
-    #budget = test_data.common_budget / 4
     suite = borg.fake.FakeSuite(test_data)
     solver = maker(suite, train_data, test_data)
     rows = []

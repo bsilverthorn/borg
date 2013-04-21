@@ -1,38 +1,27 @@
-"""@author: Bryan Silverthorn <bcs@cargo-cult.org>"""
-
 import plac
 import cPickle as pickle
 import borg
 
-logger = borg.get_logger(__name__, default_level = "INFO")
+logger = borg.get_logger(__name__, default_level="INFO")
+
 
 @plac.annotations(
-    out_path = ("path to store solver"),
-    portfolio_name = ("name of the portfolio to train"),
-    solvers_path = ("path to the solvers bundle"),
-    suffix = ("runs file suffix", "option"),
-    tasks_roots = ("paths to training task directories"),
-    )
-def main(out_path, portfolio_name, solvers_path, suffix = ".runs.csv", *tasks_roots):
-    """Train a solver."""
+    out_path=("path to store portfolio"),
+    portfolio_name=("name of the model to train"),
+    suite_path=("path to the solver suite"),
+    estimate_path=("path to the run data estimate"))
+def main(out_path, portfolio_name, suite_path, estimate_path):
+    """Train a portfolio."""
 
-    borg.enable_default_logging()
+    suite = borg.load_solvers(suite_path)
 
-    # load the solvers bundle
-    bundle = borg.load_solvers(solvers_path)
+    with borg.util.openz(estimate_path) as estimate_file:
+        estimate = pickle.load(estimate_file)
 
-    # train the portfolio
-    training = borg.storage.TrainingData.from_roots(tasks_roots, bundle.domain, suffix = suffix)
-    portfolio = borg.portfolios.named[portfolio_name](bundle, training, 100.0, 60) # XXX
+    if portfolio_name == "nearest-rtd":
+        regress = borg.regression.NearestRTDRegression(estimate)
+        portfolio = borg.portfolios.PureModelPortfolio(suite, estimate, regress)
+    else:
+        raise ValueError("unrecognized portfolio name")
 
-    logger.info("portfolio training complete")
-
-    # write it to disk
-    with open(out_path, "w") as out_file:
-        pickle.dump(portfolio, out_file, protocol = -1)
-
-    logger.info("portfolio written to %s", out_path)
-
-if __name__ == "__main__":
-    plac.call(main)
-
+script_main = borg.script_main(main, __name__)
