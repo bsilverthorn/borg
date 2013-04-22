@@ -24,4 +24,7 @@ def main(out_path, portfolio_name, suite_path, estimate_path):
     else:
         raise ValueError("unrecognized portfolio name")
 
+    with borg.util.openz(out_path, "wb") as out_file:
+        pickle.dump(portfolio, out_file)
+
 script_main = borg.script_main(main, __name__)

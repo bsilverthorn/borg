@@ -1,12 +1,11 @@
-"""@author: Bryan Silverthorn <bcs@cargo-cult.org>"""
-
 import plac
 import sys
 import logging
 import cPickle as pickle
 import borg
 
-logger = borg.get_logger(__name__, default_level = "INFO")
+logger = borg.get_logger(__name__, default_level="INFO")
+
 
 class CompetitionFormatter(logging.Formatter):
     """A concise log formatter for output during competition."""
@@ -45,25 +44,23 @@ def enable_output():
     logging.root.addHandler(handler)
 
 @plac.annotations(
-    model_path  = ("path to trained model pickle"),
-    solvers_path  = ("path to solvers bundle"),
-    input_path = ("path to instance"),
+    portfolio_path = ("path to trained portfolio"),
+    suite_path = ("path to solver suite"),
+    instance_path = ("path to instance"),
     seed = ("PRNG seed", "option", None, int),
     budget = ("time limit (CPU or wall)", "option", None, float),
     cores = ("units of execution", "option", None, int),
     speed = ("machine calibration ratio", "option", "s", float),
-    quiet = ("be less noisy", "flag", "q"),
-    )
+    quiet = ("be less noisy", "flag", "q"))
 def main(
-    model_path,
-    solvers_path,
-    input_path,
-    seed = 42,
-    budget = 3600.0,
-    cores = 1,
-    speed = borg.defaults.machine_speed,
-    quiet = False
-    ):
+        portfolio_path,
+        suite_path,
+        instance_path,
+        seed = 42,
+        budget = 3600.0,
+        cores = 1,
+        speed = borg.defaults.machine_speed,
+        quiet = False):
     """Solve a problem instance."""
 
     # XXX hackish
@@ -74,28 +71,28 @@ def main(
         enable_output()
 
         if not quiet:
-            borg.get_logger("borg.solvers", level = "DETAIL")
+            borg.get_logger("borg.solvers", level="DETAIL")
 
         borg.statistics.set_prng_seeds(seed)
 
         # run the solver
-        bundle = borg.load_solvers(solvers_path)
+        suite = borg.load_solvers(suite_path)
 
-        logger.info("loaded portfolio model from %s", model_path)
+        logger.info("loading portfolio %s", portfolio_path)
 
-        with open(model_path) as file:
-            portfolio = pickle.load(file)
+        with open(portfolio_path) as portfolio_file:
+            portfolio = pickle.load(portfolio_file)
 
-        logger.info("solving %s", input_path)
+        solver = borg.solver_io.RunningPortfolioFactory(portfolio, suite)
 
-        with bundle.domain.task_from_path(input_path) as task:
+        logger.info("solving %s", instance_path)
+
+        with suite.domain.task_from_path(instance_path) as task:
             remaining = budget - borg.get_accountant().total.cpu_seconds
-            answer = portfolio(task, bundle, borg.Cost(cpu_seconds = remaining), cores)
+            answer = solver.start(task).run_then_stop(remaining)
 
             return bundle.domain.show_answer(task, answer)
     except KeyboardInterrupt:
         print "\nc terminating on SIGINT"
 
-if __name__ == "__main__":
-    plac.call(main)
-
+script_main = borg.script_main(main, __name__, logging=False)

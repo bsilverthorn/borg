@@ -46,3 +46,5 @@ class SAT_SolverFactory(object):
                 solver_id = solver_id,
                 )
 
+    def start(self, task):
+        return self(task)

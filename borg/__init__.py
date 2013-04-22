@@ -81,16 +81,17 @@ class Suite(object):
 
         return Suite.integrated(*map(load_solvers, paths))
 
-def script(main):
+def script(main, logging=True):
     """Call a script main function."""
 
-    borg.enable_default_logging()
+    if logging:
+        borg.enable_default_logging()
 
     plac.call(main)
 
-def script_main(main, name):
+def script_main(main, name, logging=True):
     def run_script_main():
-        borg.script(main)
+        borg.script(main, logging=logging)
 
     if name == "__main__":
         run_script_main()

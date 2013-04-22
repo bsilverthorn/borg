@@ -17,7 +17,7 @@ cdef extern from "math.h":
 class Planner(object):
     """Discretizing dynamic-programming planner."""
 
-    def __init__(self, compute_plan):
+    def __init__(self, compute_plan=None):
         self._compute_plan = compute_plan
 
     def plan(self, log_survival, log_weights = None):
@@ -32,7 +32,12 @@ class Planner(object):
         else:
             log_weights_W = log_weights
 
-        return self._compute_plan(log_survival_WSB, log_weights_W)
+        if self._compute_plan is None:
+            compute_plan = self.compute_plan
+        else:
+            compute_plan = self._compute_plan
+
+        return compute_plan(log_survival_WSB, log_weights_W)
 
 @cython.infer_types(True)
 @cython.wraparound(False)
@@ -268,24 +273,26 @@ class BellmanPlanner(object):
 
         return plan
 
+
 class ReorderingPlanner(Planner):
     """Plan, then heuristically reorder."""
 
     def __init__(self, inner_planner):
-        """Initialize."""
+        self._inner_planner = inner_planner
 
-        def compute_plan(log_survival_WSB, log_weights_W):
-            plan = inner_planner.plan(log_survival_WSB, log_weights_W)
-            log_mean_fail_cmf_SB = numpy.logaddexp.reduce(log_survival_WSB + log_weights_W[:, None, None], axis = 0)
+        Planner.__init__(self)
 
-            def efficiency(pair):
-                (s, c) = pair
+    def compute_plan(self, log_survival_WSB, log_weights_W):
+        plan = self._inner_planner.plan(log_survival_WSB, log_weights_W)
+        log_mean_fail_cmf_SB = numpy.logaddexp.reduce(log_survival_WSB + log_weights_W[:, None, None], axis = 0)
 
-                return log_mean_fail_cmf_SB[s, c] / (c + 1)
+        def efficiency(pair):
+            (s, c) = pair
 
-            return sorted(plan, key = efficiency)
+            return log_mean_fail_cmf_SB[s, c] / (c + 1)
 
-        Planner.__init__(self, compute_plan)
+        return sorted(plan, key = efficiency)
+
 
 class ReplanningPlanner(object):
     """Repeatedly replan."""

@@ -30,7 +30,7 @@ class MultiClassifier(object):
             if numpy.any(Y[:, d] > 0):
                 model = self._model_class(**self._model_kwargs)
 
-                model.fit(X, Y[:, d], class_weight = {0: 1.0, 1: 10.0})
+                model.fit(X, Y[:, d])
             else:
                 model = None
 
@@ -112,7 +112,9 @@ class NearestRTDRegression(object):
 
         logger.info("fitting classifier to nearest RTDs")
 
-        classifier = MultiClassifier(sklearn.linear_model.LogisticRegression)
+        classifier = MultiClassifier(
+            sklearn.linear_model.LogisticRegression,
+            class_weight={0: 1.0, 1: 10.0})
         #classifier = MultiClassifier(sklearn.svm.SVC, scale_C = True, probability = True)
         #classifier = MultiClassifier(sklearn.linear_model.LogisticRegression, penalty = "l1", C = 1e-1)
         #classifier = MultiClassifier(sklearn.linear_model.LogisticRegression, penalty = "l2", C = 1e-2)
@@ -121,7 +123,7 @@ class NearestRTDRegression(object):
             sklearn.pipeline.Pipeline([
                 #("pca", sklearn.decomposition.PCA(whiten = True)),
                 #("kernel", sklearn.kernel_approximation.RBFSampler(n_components = 1000)),
-                ("scaler", sklearn.preprocessing.Scaler()),
+                ("scaler", sklearn.preprocessing.StandardScaler()),
                 ("classifier", classifier),
                 ]) \
                 .fit(features, nearest)
